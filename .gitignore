@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+
+# Virtual environments
+venv/
+env/
+*.egg-info/
+
+# PyCharm files
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Image output (optional – if you're saving output images)
+*.png
+*.jpg
+
+# Compiled files
+*.exe

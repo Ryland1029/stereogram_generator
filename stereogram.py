@@ -3,13 +3,9 @@ import numpy as np
 import maps
 
 # SIRDS = single-image random dot stereogram
-def generate_sirds(width=600, height=400, eye_sep=60, depth_scale=0.33):
+def generate_sirds(width=800, height=600, eye_sep=100, depth_scale=0.7, depth_map = None):
 
-    # creating random depth map
-    #depth_map = np.random.rand(height, width) * depth_scale
-
-    #calling rectangle map from maps.py
-    depth_map = maps.rectangle_map(width, height, 150, 80, 200, 100, depth_value=0.7)
+    height, width = depth_map.shape
 
     #creating a pattern that will repeat horizontally with width of pattern = eye_sep for now
     pattern_width = eye_sep

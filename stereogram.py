@@ -1,15 +1,20 @@
 from PIL import Image
 import numpy as np
 import maps
+import noise
+import coloring
+
 
 # SIRDS = single-image random dot stereogram
-def generate_sirds(width=800, height=600, eye_sep=100, depth_scale=0.7, depth_map = None):
+def generate_sirds(width=800, height=600, eye_sep=100, depth_scale=0.7, depth_map = None, noise_pattern = None):
 
     height, width = depth_map.shape
 
     #creating a pattern that will repeat horizontally with width of pattern = eye_sep for now
     pattern_width = eye_sep
-    pattern = np.random.randint(0, 256, (height, pattern_width), dtype=np.uint8)
+
+    # define the noise pattern as the one chosen
+    pattern = noise_pattern(height, pattern_width)
 
     #output image, creates numpy array of zeros with height and width of input image
     #blank black canvas to fill with values eventually
@@ -33,7 +38,8 @@ def generate_sirds(width=800, height=600, eye_sep=100, depth_scale=0.7, depth_ma
             if 0 <= src_x < width:
                 image[y, x] = image[y, src_x]
 
-    return Image.fromarray(image)
+    # add color to image
+    colored_image = coloring.greyscale_to_satscale(image)
 
-
+    return Image.fromarray(colored_image)
 

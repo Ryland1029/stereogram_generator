@@ -27,7 +27,7 @@ def greyscale_to_rgb(grey_array, sat = 1.0, val = 1.0):
 
 
 # convert greyscale to constant color but changing saturation
-def greyscale_to_satscale(grey_array, hue = 0.8, val = 1.0):
+def greyscale_to_satscale(grey_array, hue = 0.6, val = 1.0):
 
     # 2D greyscale array
     height, width = grey_array.shape
@@ -47,3 +47,8 @@ def greyscale_to_satscale(grey_array, hue = 0.8, val = 1.0):
 
     return rgb_array
 
+available_color_options = {
+    "greyscale": None,
+    "rainbow": greyscale_to_rgb,
+    "single hue": greyscale_to_satscale
+}

@@ -19,7 +19,8 @@ def horizontal_gradient_map(width, height):
     depth_map = np.tile(np.linspace(0,0.7,width),(height,1))
     return depth_map
 
-def hori_sine_map(width, height, freq = 2, amp = 0.5, phase = 0.5):
+# create horizontal sine wave map
+def hori_sine_map(width, height, freq = 2, amp = 0.3, phase = 0.5):
 
     x = np.linspace(0, 1, width)
     wave = 0.5 * (1 + np.sin(2 * np.pi * freq * x + phase)) * amp
@@ -27,12 +28,34 @@ def hori_sine_map(width, height, freq = 2, amp = 0.5, phase = 0.5):
 
     return depth_map
 
-#has to be bottom
-# map registry
+# create tunnel map
+def tunnel_map(width, height, depth_value=0.25):
+
+    # 2D array with coordingates y and x for each pixel
+    y,x = np.indices((height, width))
+    # center of the tunnel
+    center_x = width // 2
+    center_y = height // 2
+    # distance of pixel from center of tunnel in 2 separate dimensions
+    dx = x - center_x
+    dy = y - center_y
+
+    # Euclidian norm, gives pixel's distance from tunnel center (by calculating hypotenuse b/w center and pixel)
+    distance_from_center = np.hypot(dx, dy)
+
+    max_distance = np.hypot(center_x, center_y)
+    depth_map = np.exp(distance_from_center/max_distance)
+    depth_map*=depth_value
+
+    return depth_map
+
+
+# map registry (must be below all functions)
 available_maps = {
     "rectangle": rectangle_map,
     "horizontal gradient": horizontal_gradient_map,
     "horizontal sine": hori_sine_map,
+    "tunnel": tunnel_map,
 }
 
 

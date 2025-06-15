@@ -6,12 +6,18 @@ import coloring
 
 
 # SIRDS = single-image random dot stereogram
-def generate_sirds(width=800, height=600, eye_sep=100, depth_scale=0.7, depth_map = None, noise_pattern = None):
+def generate_sirds(
+        width=800,
+        height=600,
+        pattern_width=100,
+        depth_scale=0.7,
+        depth_map=None,
+        noise_pattern=None,
+        color_option=None,
+        hue=None,
+):
 
     height, width = depth_map.shape
-
-    #creating a pattern that will repeat horizontally with width of pattern = eye_sep for now
-    pattern_width = eye_sep
 
     # define the noise pattern as the one chosen
     pattern = noise_pattern(height, pattern_width)
@@ -29,17 +35,21 @@ def generate_sirds(width=800, height=600, eye_sep=100, depth_scale=0.7, depth_ma
         for y in range(height):
 
             #multiplying map by separation to shift pixels to create depth - closer pixel gets larger disparity to appear closer
-            disparity = int(depth_map[y,x] * eye_sep)
+            disparity = int(depth_map[y,x] * pattern_width)
 
             # give x coordinate to copy pixel color to new
-            src_x = x - eye_sep + disparity
+            src_x = x - pattern_width + disparity
 
             #copy the pixel color from source to current position
             if 0 <= src_x < width:
                 image[y, x] = image[y, src_x]
 
-    # add color to image
-    colored_image = coloring.greyscale_to_satscale(image)
+    # add color to image (or leave greyscale)
+    if color_option is not None:
+        if color_option == coloring.greyscale_to_satscale:
+            image = color_option(image, hue=hue)
+        else:
+            image = color_option(image)
 
-    return Image.fromarray(colored_image)
+    return Image.fromarray(image)
 

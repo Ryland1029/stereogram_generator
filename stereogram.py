@@ -30,12 +30,16 @@ def generate_sirds(
     # puts the base pattern to be repeated on L side of image.
     image[:, :pattern_width] = pattern
 
+    # normalize to always 0-1 (moved to generate_and_display in gui.py)
+    #depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
+
     #loop through each pixel left to right top to bottom, not including pattern_width that is already written
     for x in range(pattern_width, width):
         for y in range(height):
 
             #multiplying map by separation to shift pixels to create depth - closer pixel gets larger disparity to appear closer
-            disparity = int(depth_map[y,x] * pattern_width)
+            # clamps disparity to be between 0 and pattern_width - 1 to prevent wraparound artifact
+            disparity = min(int(depth_map[y,x] * pattern_width), pattern_width - 1)
 
             # give x coordinate to copy pixel color to new
             src_x = x - pattern_width + disparity

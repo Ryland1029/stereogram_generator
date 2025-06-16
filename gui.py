@@ -2,24 +2,26 @@ import tkinter as tk
 from tkinter import ttk
 import sv_ttk
 
-from PIL import ImageTk, Image
+from PIL import ImageTk
 import time
 
 import stereogram
 import maps
 import noise
 import coloring
+import plotting
 
 class App:
     def __init__(self):
         self.root = tk.Tk()
         sv_ttk.set_theme("dark")
         self.root.title("Stereogram Generator")
-        self.root.geometry("1050x700")
+        self.root.geometry("1050x700+14+21")
         self.root.resizable(True, True)
 
-        # init pattern width
+        # init variables
         self.pattern_width = 60
+        self.depth_comp_var = tk.DoubleVar(value=0.4)
 
         #title of App
         title = ttk.Label(
@@ -29,6 +31,10 @@ class App:
             #fg = "maroon"
         )
         title.pack()
+
+        # draw the image onto gui
+        self.image_label = tk.Label(self.root)
+        self.image_label.pack(side=tk.RIGHT, anchor="e", padx=20)
 
         # frame for generation option buttons/dropdowns/etc
         self.options_frame = ttk.Frame(self.root)
@@ -62,13 +68,27 @@ class App:
             from_=20,
             to=200,
             orient=tk.HORIZONTAL,
-            command=self.on_slider_change
+            command=self.on_width_slider_change
         )
         self.pattern_width_slider.set(self.pattern_width)
         self.pattern_width_slider.pack()
 
-        self.slider_label = ttk.Label(self.slider_frame, text="Pattern Width")
-        self.slider_label.pack()
+        self.pattern_slider_label = ttk.Label(self.slider_frame, text="Pattern Width")
+        self.pattern_slider_label.pack()
+
+        # slider frame for depth compression
+        self.depth_compression_slider_frame = ttk.Frame(self.options_frame)
+        self.depth_compression_slider_frame.pack(anchor = "w", pady=10)
+
+        # slider for depth compression
+        self.depth_compression_slider = ttk.Scale(self.depth_compression_slider_frame, from_=0.01, to=0.95, orient=tk.HORIZONTAL,
+        variable=self.depth_comp_var
+        )
+        self.depth_compression_slider.pack()
+
+        #slider label for depth compression
+        self.depth_compression_slider_label = ttk.Label(self.depth_compression_slider_frame, text="Depth Compression")
+        self.depth_compression_slider_label.pack(padx=9)
 
         # color options dropdown menu
         self.coloring_type = coloring.available_color_options
@@ -101,9 +121,12 @@ class App:
         self.hue_label.pack()
         self.update_hue_slider_visibility()
 
-        # frma for gen button and benchmark (bottom left of app)
+        # frame for gen button and benchmark (bottom left of app)
         self.gen_frame = ttk.Frame(self.root)
         self.gen_frame.pack(side=tk.LEFT, anchor="sw", padx=10, pady=10)
+
+        self.plot_button = ttk.Button(self.gen_frame, text="Depth Map", command=self.show_depth_map)
+        self.plot_button.pack(padx=10, pady=10)
 
         #button to run the program to generate the image
         run_button = ttk.Button(
@@ -117,7 +140,7 @@ class App:
         self.root.bind("<Return>", lambda event: self.generate_and_display())
 
         # time it took to generate image
-        self.gen_time_label = ttk.Label(self.gen_frame, text="", font=("Arial", 10))
+        self.gen_time_label = ttk.Label(self.gen_frame, text=" ", font=("Arial", 8))
         self.gen_time_label.pack(anchor="sw", padx=10)
 
         # toggle light vs dark theme
@@ -127,11 +150,6 @@ class App:
         # button to reset the app
         reset_button = ttk.Button(self.root, text="Reset", command=self.reset_app)
         reset_button.place(x=10,y=10)
-
-        # draw the image onto gui
-        self.image_label = tk.Label(self.root)
-        self.image_label.place(x=225, y=80)
-
 
 
     def generate_and_display(self):
@@ -159,6 +177,8 @@ class App:
         height = 600
 
         depth_map = depth_map_function(width=width, height=height)
+        depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
+        depth_map *= self.depth_comp_var.get()
 
         #linking all the args for the stereogram function
         image = stereogram.generate_sirds(
@@ -170,14 +190,19 @@ class App:
         )
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
-        self.gen_time_label.config(text=f" generated in: \n {elapsed_time:.3f} sec")
+        self.gen_time_label.config(text=f" {elapsed_time:.3f} sec")
+
+        self.last_depth_map = depth_map
 
         # put the image in the gui
         self.photo = ImageTk.PhotoImage(image)
         self.image_label.config(image=self.photo)
 
+        # plot depth map w/ matplotlib
+        #plotting.plot_depth_map(depth_map)
+        #plotting.plot_disparity_map(depth_map, pattern_width=self.pattern_width)
 
-    def on_slider_change(self, value):
+    def on_width_slider_change(self, value):
         if self.selected_map_name.get() == "--Choose map--":
             return
         self.pattern_width = int(float(value))
@@ -194,15 +219,21 @@ class App:
             self.hue_slider.configure(state="disabled")
             #self.hue_label.configure(fg="gray")
 
+    def show_depth_map(self):
+        if self.last_depth_map is not None:
+            plotting.plot_depth_map(self.last_depth_map)
+
+
     def reset_app(self):
         self.selected_map_name.set(self.map_options[0])
         self.selected_pattern_name.set(self.noise_options[0])
         self.pattern_width_slider.set(self.pattern_width)
+        self.depth_compression_slider.set(0.4)
         self.selected_color_option.set(self.color_options[0])
         self.hue_slider.set(0.6)
         self.image_label.config(image="")
         self.gen_time_label.config(text="")
-
+        self.root.geometry("1050x700")
 
     def run(self):
         self.root.mainloop()

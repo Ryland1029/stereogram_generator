@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import sv_ttk
 
-from PIL import ImageTk
+from PIL import ImageTk, Image
 import time
 
 import stereogram
@@ -84,10 +84,10 @@ class App:
         self.depth_compression_slider = ttk.Scale(self.depth_compression_slider_frame, from_=0.01, to=0.95, orient=tk.HORIZONTAL,
         variable=self.depth_comp_var
         )
-        self.depth_compression_slider.pack()
+        self.depth_compression_slider.pack(padx=20)
 
         #slider label for depth compression
-        self.depth_compression_slider_label = ttk.Label(self.depth_compression_slider_frame, text="Depth Compression")
+        self.depth_compression_slider_label = ttk.Label(self.depth_compression_slider_frame, text="Depth")
         self.depth_compression_slider_label.pack(padx=9)
 
         # color options dropdown menu
@@ -121,7 +121,7 @@ class App:
         self.hue_label.pack()
         self.update_hue_slider_visibility()
 
-        # frame for gen button and benchmark (bottom left of app)
+        # frame for gen button, plot depthmap, and benchmark (bottom left of app)
         self.gen_frame = ttk.Frame(self.root)
         self.gen_frame.pack(side=tk.LEFT, anchor="sw", padx=10, pady=10)
 
@@ -138,6 +138,7 @@ class App:
         run_button.pack(anchor="sw", padx=10, pady=10)
         # bind ENTER key to also run the button
         self.root.bind("<Return>", lambda event: self.generate_and_display())
+        self.root.bind("<space>", lambda event: self.generate_and_display())
 
         # time it took to generate image
         self.gen_time_label = ttk.Label(self.gen_frame, text=" ", font=("Arial", 8))
@@ -151,9 +152,11 @@ class App:
         reset_button = ttk.Button(self.root, text="Reset", command=self.reset_app)
         reset_button.place(x=10,y=10)
 
+        # button to download image
+        download_button = ttk.Button(self.root, text="Download", command=lambda: self.save_image())
+        download_button.place(x=157, y=10)
 
     def generate_and_display(self):
-        start_time = time.perf_counter()
 
         # define which map to use
         selected_map = self.selected_map_name.get()
@@ -180,6 +183,8 @@ class App:
         depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
         depth_map *= self.depth_comp_var.get()
 
+        start_time = time.perf_counter()
+
         #linking all the args for the stereogram function
         image = stereogram.generate_sirds(
             depth_map=depth_map,
@@ -191,6 +196,8 @@ class App:
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
         self.gen_time_label.config(text=f" {elapsed_time:.3f} sec")
+
+        self.image = image
 
         self.last_depth_map = depth_map
 
@@ -223,6 +230,19 @@ class App:
         if self.last_depth_map is not None:
             plotting.plot_depth_map(self.last_depth_map)
 
+    def save_image(self):
+        from tkinter import filedialog
+
+        if not hasattr(self, 'image'):
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            filetypes=[("PNG files", "*.png"), ("All files", "*.*")],
+            title="Save Stereogram As..."
+        )
+        if file_path:
+            self.image.save(file_path)
 
     def reset_app(self):
         self.selected_map_name.set(self.map_options[0])

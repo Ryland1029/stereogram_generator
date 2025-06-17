@@ -28,25 +28,40 @@ def generate_sirds(
 
     # indexing the image - all rows, all columns up to but not including pattern_width.
     # puts the base pattern to be repeated on L side of image.
-    image[:, :pattern_width] = pattern
+    # (got rid of this to make it reference only, not part of image)
+    #image[:, :pattern_width] = pattern
 
     # normalize to always 0-1 (moved to generate_and_display in gui.py)
     #depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
 
-    #loop through each pixel left to right top to bottom, not including pattern_width that is already written
-    for x in range(pattern_width, width):
+    assert pattern_width < width
+
+    #loop through each pixel left to right top to bottom
+    for x in range(width):
         for y in range(height):
 
-            #multiplying map by separation to shift pixels to create depth - closer pixel gets larger disparity to appear closer
-            # clamps disparity to be between 0 and pattern_width - 1 to prevent wraparound artifact
+            # multiplying map by separation to shift pixels to create depth - closer pixel gets larger disparity to appear closer
+            # also clamps disparity to be between 0 and pattern_width - 1 to prevent wraparound artifact
             disparity = min(int(depth_map[y,x] * pattern_width), pattern_width - 1)
 
             # give x coordinate to copy pixel color to new
             src_x = x - pattern_width + disparity
 
-            #copy the pixel color from source to current position
-            if 0 <= src_x < width:
-                image[y, x] = image[y, src_x]
+            # needs fixed (linear interpolation to smooth depth)
+            # x0 = int(np.floor(src_x))
+            # x1 = x0 + 1
+            # alpha = src_x - x0
+            #
+            # if 0 <= x0 < width and 0 <= x1 < width:
+            #     left = image[y, x0]
+            #     right = image[y, x1]
+            #     image[y, x] = int((1 - alpha) * left + alpha * right)
+
+            #copy the pixel color from source to current position, modified so pattern is just a reference
+            if src_x < 0:
+                image[y, x] = pattern[y, x % pattern_width]
+            elif src_x < width:
+                image[y,x] = image [y, src_x]
 
     # add color to image (or leave greyscale)
     if color_option is not None:

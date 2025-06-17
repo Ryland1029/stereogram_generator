@@ -51,13 +51,14 @@ def two_sine_map(width, height, freq = 4, amp = 0.3, phase = 0.5):
 
     return depth_map
 
-def carton_map(width, height, mode_x=6, mode_y=5, amplitude=0.1):
+def standing_wave_map(width, height, mode_x=5, mode_y=3, amplitude=0.1):
     x = np.linspace(0, np.pi, width)
     y = np.linspace(0, np.pi, height)
     xv, yv = np.meshgrid(x, y)
 
     # Standing wave pattern (sin(nπx/L) * sin(mπy/L))
-    depth_map = amplitude * np.sin(mode_x * xv) * np.sin(mode_y * yv)
+    # depth_map = amplitude * np.sin(mode_x * xv) * np.sin(mode_y * yv)
+    depth_map = (amplitude * np.sin(mode_x * xv) * np.sin(mode_y * yv)) + (amplitude * np.sin(mode_x * yv) * np.sin(mode_y * xv))
 
     # Normalize
     depth_map = 0.5 * (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
@@ -92,7 +93,7 @@ available_maps = {
     "checkerboard": checkerboard_map,
     "horizontal gradient": horizontal_gradient_map,
     "horizontal sine": hori_sine_map,
-    "carton": carton_map,
+    "standing wave": standing_wave_map,
     "tunnel": tunnel_map,
 }
 

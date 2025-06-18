@@ -1,6 +1,6 @@
 # Stereogram Generator
 
-A Python application for generating single-image random dot stereograms (SIRDS) from a variety of parametric depth maps. The app allows control of noise type, pattern width, hue adjustment, depth, and smoothing.
+A Python application for generating single-image random dot stereograms (SIRDS) from a variety of depth maps. The app allows control of noise type, pattern width, hue adjustment, depth, and smoothing.
 
 ## Features
 

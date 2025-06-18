@@ -121,6 +121,11 @@ class App:
         self.hue_label.pack()
         self.update_hue_slider_visibility()
 
+        # depth smoothing toggle
+        self.smooth_var = tk.BooleanVar(value=False)
+        self.smooth_toggle = ttk.Checkbutton(self.options_frame, variable=self.smooth_var, onvalue=True, offvalue=False, text="Depth Smoothing")
+        self.smooth_toggle.pack(anchor="w", padx=5, pady=10)
+
         # frame for gen button, plot depthmap, and benchmark (bottom left of app)
         self.gen_frame = ttk.Frame(self.root)
         self.gen_frame.pack(side=tk.LEFT, anchor="sw", padx=10, pady=10)
@@ -192,6 +197,7 @@ class App:
             noise_pattern=noise_pattern,
             color_option=color_option,
             hue=self.hue_var.get(),
+            smoothing=self.smooth_var.get()
         )
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time

@@ -3,6 +3,9 @@ from tkinter import ttk
 import sv_ttk
 
 from PIL import ImageTk, Image
+from tkinter import filedialog
+import numpy as np
+import os
 import time
 
 import stereogram
@@ -22,6 +25,7 @@ class App:
         # init variables
         self.pattern_width = 60
         self.depth_comp_var = tk.DoubleVar(value=0.4)
+        self.custom_depth_map = None
 
         #title of App
         title = ttk.Label(
@@ -41,13 +45,17 @@ class App:
         self.options_frame.pack( anchor="nw", pady=50)
 
         # dropdown to pick which depth map to generate from
-        self.map_functions = maps.available_maps
+        self.map_functions = maps.available_maps.copy()
         self.map_options = ["--Choose map--"] + list(self.map_functions.keys())
         self.selected_map_name = tk.StringVar(self.root)
         self.selected_map_name.set(self.map_options[0])
 
         self.map_menu = ttk.OptionMenu(self.options_frame, self.selected_map_name, *self.map_options)
         self.map_menu.pack(anchor="w", padx=10, pady=10)
+
+        # button to upload custom depth map
+        self.upload_button = ttk.Button(self.options_frame, text="Upload Custom Depth Map", command=self.upload_custom_depth_map)
+        self.upload_button.pack(anchor="w", padx=10, pady=5)
 
         #dropdown to pick which noise algorithm to use
         self.noise_pattern = noise.available_patterns
@@ -263,3 +271,63 @@ class App:
 
     def run(self):
         self.root.mainloop()
+
+    def upload_custom_depth_map(self):
+        # Open file dialog to select image file
+        file_path = filedialog.askopenfilename(
+            title="Select Custom Depth Map Image",
+            filetypes=[
+                ("Image files", "*.png *.jpg *.jpeg *.bmp *.tiff *.gif"),
+                ("PNG files", "*.png"),
+                ("JPEG files", "*.jpg *.jpeg"),
+                ("All files", "*.*")
+            ]
+        )
+        
+        if file_path:
+            try:
+                # Load and process the image
+                image = Image.open(file_path)
+                
+                # Convert to grayscale if it's not already
+                if image.mode != 'L':
+                    image = image.convert('L')
+                
+                # Convert to numpy array
+                depth_array = np.array(image, dtype=np.float32)
+                
+                # Normalize to 0-1 range (black=0, white=1)
+                depth_array = depth_array / 255.0
+                
+                # Store the custom depth map
+                self.custom_depth_map = depth_array
+                
+                # Create a function that returns the custom depth map
+                def custom_map_function(width, height):
+                    # Resize the custom depth map to match requested dimensions
+                    custom_image = Image.fromarray((self.custom_depth_map * 255).astype(np.uint8))
+                    resized_image = custom_image.resize((width, height), Image.Resampling.LANCZOS)
+                    return np.array(resized_image, dtype=np.float32) / 255.0
+                
+                # Add to map functions and update dropdown
+                custom_name = os.path.basename(file_path)
+                self.map_functions[custom_name] = custom_map_function
+                
+                # Update the dropdown options
+                self.map_options = ["--Choose map--"] + list(self.map_functions.keys())
+                
+                # Recreate the dropdown menu with updated options
+                self.map_menu.destroy()
+                self.map_menu = ttk.OptionMenu(self.options_frame, self.selected_map_name, *self.map_options)
+                self.map_menu.pack(anchor="w", padx=10, pady=10)
+                
+                # Set the newly uploaded map as selected
+                self.selected_map_name.set(custom_name)
+                
+                print(f"Successfully loaded custom depth map: {file_path}")
+                
+            except Exception as e:
+                print(f"Error loading custom depth map: {e}")
+                # You could add a messagebox here to show the error to the user
+                from tkinter import messagebox
+                messagebox.showerror("Error", f"Failed to load image: {str(e)}")

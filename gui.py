@@ -34,7 +34,7 @@ class App:
 
         # draw the image onto gui
         self.image_label = tk.Label(self.root)
-        self.image_label.pack(side=tk.RIGHT, anchor="e", padx=20)
+        self.image_label.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=20)
 
         # frame for generation option buttons/dropdowns/etc
         self.options_frame = ttk.Frame(self.root)
